@@ -1,5 +1,19 @@
 # @cloudflare/agents
 
+## 0.17.4
+
+### Patch Changes
+
+- [#1902](https://github.com/cloudflare/agents/pull/1902) [`a9d78c0`](https://github.com/cloudflare/agents/commit/a9d78c01379e7715f7fe33046e71bd9eaf3611ef) Thanks [@mattzcarey](https://github.com/mattzcarey)! - Always apply the Worker-safe `CfWorkerJsonSchemaValidator` to MCP client connections by default.
+
+  `MCPClientConnection` now owns the default (merged in its constructor), so every construction path uses the Worker-safe validator unless the caller supplies their own — including the RPC `addMcpServer(name, namespace)` path via `MCPClientManager.connect()`, which previously skipped it. Without the default, the MCP SDK fell back to its AJV validator when a server exposed tools with `outputSchema`; AJV compiles schemas with `new Function`, which Workers disallows, failing discovery with "Code generation from strings disallowed for this context".
+
+  `connect()` now builds connections through `createConnection()` instead of duplicating construction, so the two paths can no longer drift. Caller-supplied `client.jsonSchemaValidator` overrides are respected on the live connection; because validator instances cannot survive JSON serialization, they are no longer persisted, and a previously persisted, serialization-degraded validator is ignored on restore — after hibernation the connection falls back to the Worker-safe default instead of failing discovery.
+
+- [#1869](https://github.com/cloudflare/agents/pull/1869) [`f274903`](https://github.com/cloudflare/agents/commit/f274903ee06123bc12cd5834d5187b7ffec4722e) Thanks [@mattzcarey](https://github.com/mattzcarey)! - Fix `addMcpServer()` reporting `ready` for an HTTP MCP connection that was restored while OAuth is still in progress.
+
+  For an existing `AUTHENTICATING` connection, `addMcpServer()` now prefers the live authorization URL, otherwise returns a persisted absolute HTTP(S) authorization URL. If neither is available, it reconnects the existing connection without re-registering it: a new authorization URL is returned and persisted, a connected result is discovered before returning `ready`, and failed or incomplete OAuth results throw instead of falling through to `ready`.
+
 ## 0.17.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @cloudflare/voice
 
+## 0.3.4
+
+### Patch Changes
+
+- [#1891](https://github.com/cloudflare/agents/pull/1891) [`d1cc317`](https://github.com/cloudflare/agents/commit/d1cc317516878c640438de00b854786381a2b08e) Thanks [@korinne](https://github.com/korinne)! - Add transcriber readiness so voice agents wait for streaming STT startup before entering listening state or running call-start hooks.
+
 ## 0.3.3
 
 ### Patch Changes
