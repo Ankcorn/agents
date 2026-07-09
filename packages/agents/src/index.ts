@@ -81,6 +81,7 @@ import {
   type Observability,
   type ObservabilityEvent
 } from "./observability";
+import { tracer } from "./observability/tracing/cloudflare";
 import { DisposableStore } from "./core/events";
 import { MessageType } from "./types";
 import { RPC_DO_PREFIX } from "./mcp/rpc";
@@ -2241,20 +2242,38 @@ export class Agent<
   constructor(ctx: AgentContext, env: Env) {
     super(ctx, env);
 
-    if (!wrappedClasses.has(this.constructor)) {
-      // Auto-wrap custom methods with agent context
-      this._autoWrapCustomMethods();
-      wrappedClasses.add(this.constructor);
-    }
+    this.mcp = tracer.openSpan(
+      "agent_initialization",
+      {
+        "cloudflare.agents.agent.id": this.name,
+        "cloudflare.agents.agent.name": this._ParentClass.name,
+        "cloudflare.agents.operation.name": "agent_initialization"
+      },
+      (span) => {
+        try {
+          if (!wrappedClasses.has(this.constructor)) {
+            // Auto-wrap custom methods with agent context
+            this._autoWrapCustomMethods();
+            wrappedClasses.add(this.constructor);
+          }
 
-    this._ensureSchema();
+          this._ensureSchema();
 
-    // Initialize MCPClientManager AFTER tables are created
-    this.mcp = new MCPClientManager(this._ParentClass.name, "0.0.1", {
-      storage: this.ctx.storage,
-      createAuthProvider: (callbackUrl) =>
-        this.createMcpOAuthProvider(callbackUrl)
-    });
+          // Initialize MCPClientManager AFTER tables are created
+          const mcp = new MCPClientManager(this._ParentClass.name, "0.0.1", {
+            storage: this.ctx.storage,
+            createAuthProvider: (callbackUrl) =>
+              this.createMcpOAuthProvider(callbackUrl)
+          });
+
+          span.finish();
+          return mcp;
+        } catch (cause: unknown) {
+          span.fail(cause);
+          throw cause;
+        }
+      }
+    );
 
     // Broadcast server state whenever MCP state changes (register, connect, OAuth, remove, etc.)
     this._disposables.add(
