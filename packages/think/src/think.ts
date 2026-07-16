@@ -318,13 +318,18 @@ type AgentSpanAttributes = Readonly<
 >;
 
 type UpdateAgentSpan = (attributes: AgentSpanAttributes) => void;
+type AgentSpanLifetime = {
+  finishOnChild?: string;
+  finishOnAsyncHandoff?: boolean;
+};
 
 type AgentSpanHost = {
   _withAgentSpan<T>(
     operation: string,
     storagePhase: string,
     attributes: AgentSpanAttributes,
-    run: (update: UpdateAgentSpan) => T | Promise<T>
+    run: (update: UpdateAgentSpan) => T | Promise<T>,
+    lifetime?: AgentSpanLifetime
   ): T | Promise<T>;
 };
 
@@ -333,27 +338,31 @@ function withAgentSpan<T>(
   operation: string,
   storagePhase: string,
   attributes: AgentSpanAttributes,
-  run: (update: UpdateAgentSpan) => Promise<T>
+  run: (update: UpdateAgentSpan) => Promise<T>,
+  lifetime?: AgentSpanLifetime
 ): Promise<T>;
 function withAgentSpan<T>(
   host: object,
   operation: string,
   storagePhase: string,
   attributes: AgentSpanAttributes,
-  run: (update: UpdateAgentSpan) => T
+  run: (update: UpdateAgentSpan) => T,
+  lifetime?: AgentSpanLifetime
 ): T;
 function withAgentSpan<T>(
   host: object,
   operation: string,
   storagePhase: string,
   attributes: AgentSpanAttributes,
-  run: (update: UpdateAgentSpan) => T | Promise<T>
+  run: (update: UpdateAgentSpan) => T | Promise<T>,
+  lifetime?: AgentSpanLifetime
 ): T | Promise<T> {
   return (host as AgentSpanHost)._withAgentSpan(
     operation,
     storagePhase,
     attributes,
-    run
+    run,
+    lifetime
   );
 }
 
@@ -6976,7 +6985,10 @@ export class Think<
               throw error;
             }
           }
-        )
+        ),
+      spec.trigger === "ws-chat"
+        ? { finishOnChild: "persist_chat_result" }
+        : undefined
     );
   }
 
@@ -10907,7 +10919,8 @@ export class Think<
                 "cloudflare.agents.component": "think",
                 "cloudflare.agents.turn.request_id": event.id
               },
-              () => this._handleProtocolEvent(connection, event)
+              () => this._handleProtocolEvent(connection, event),
+              { finishOnChild: "chat_turn" }
             );
           } else {
             await this._handleProtocolEvent(connection, event);
@@ -11320,7 +11333,8 @@ export class Think<
                     this._streamResult(requestId, result, abortSignal, {
                       parentId: branchParentId,
                       overflowRecovery
-                    })
+                    }),
+                  { finishOnAsyncHandoff: true }
                 );
 
                 if (overflowRequested) {

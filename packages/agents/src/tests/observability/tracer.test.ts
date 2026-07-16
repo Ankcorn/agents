@@ -25,6 +25,55 @@ describe("createTracer", () => {
       expect(tracing.rootSpans[0]?.ended).toBe(true);
     });
 
+    it("automatically finishes after a matching child opens", async () => {
+      const tracing = new RecordingTracer();
+      let parentEndedWhenChildRan = false;
+
+      await Promise.resolve(
+        tracing.withSpan(
+          "parent",
+          {},
+          async () => {
+            await Promise.resolve(
+              tracing.withSpan("child", {}, async () => {
+                parentEndedWhenChildRan = tracing.rootSpans[0]?.ended === true;
+              })
+            );
+            await Promise.resolve(
+              tracing.withSpan("later-child", {}, async () => undefined)
+            );
+          },
+          { finishOnChild: "child" }
+        )
+      );
+
+      const parent = tracing.rootSpans[0];
+      expect(parentEndedWhenChildRan).toBe(true);
+      expect(parent?.endCount).toBe(1);
+      expect(parent?.children.map((child) => child.name)).toEqual([
+        "child",
+        "later-child"
+      ]);
+      expect(parent?.children.every((child) => child.ended)).toBe(true);
+    });
+
+    it("automatically finishes when async work is handed off", async () => {
+      const tracing = new RecordingTracer();
+      let resolve: (() => void) | undefined;
+      const pending = new Promise<void>((done) => {
+        resolve = done;
+      });
+
+      const result = tracing.withSpan("op", {}, () => pending, {
+        finishOnAsyncHandoff: true
+      });
+
+      expect(tracing.rootSpans[0]?.ended).toBe(true);
+      resolve?.();
+      await result;
+      expect(tracing.rootSpans[0]?.endCount).toBe(1);
+    });
+
     it("marks the span errored when the sync callback throws", () => {
       const tracing = new RecordingTracer();
       const cause = new TypeError("boom");

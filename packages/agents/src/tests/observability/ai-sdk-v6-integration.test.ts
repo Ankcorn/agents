@@ -241,6 +241,40 @@ describe("createAISDKV6Wrapper with the real AI SDK", () => {
     expect(tracing.rootSpans[0]?.ended).toBe(true);
   });
 
+  it("bounds WebSocket stream spans at handoff without losing their parent", async () => {
+    const tracing = new RecordingTracer();
+    const wrapped = createAISDKV6Wrapper(ai, { tracer: tracing });
+    const result = wrapped.streamText({
+      model: textStreamModel(),
+      prompt: "bounded",
+      experimental_telemetry: {
+        metadata: { "cloudflare.agents.turn.trigger": "ws-chat" }
+      }
+    });
+
+    const invokeSpan = tracing.rootSpans[0];
+    expect(invokeSpan?.ended).toBe(false);
+
+    const reader = result.fullStream.getReader();
+    let chatSpan = tracing.spans.find(
+      (span) => span.attributes["gen_ai.operation.name"] === "chat"
+    );
+    let readDone = false;
+    while (!chatSpan && !readDone) {
+      const read = await reader.read();
+      readDone = read.done;
+      chatSpan = tracing.spans.find(
+        (span) => span.attributes["gen_ai.operation.name"] === "chat"
+      );
+    }
+
+    expect(readDone).toBe(false);
+    expect(invokeSpan?.ended).toBe(true);
+    expect(chatSpan?.ended).toBe(true);
+    expect(chatSpan?.parent).toBe(invokeSpan);
+    await reader.cancel();
+  });
+
   it("traces tool execution with the SDK-provided tool call id", async () => {
     const tracing = new RecordingTracer();
     const wrapped = createAISDKV6Wrapper(ai, { tracer: tracing });

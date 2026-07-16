@@ -20,7 +20,8 @@ export function wrapModel(
   wrapLanguageModel: AISDKV6WrapLanguageModel | undefined,
   model: unknown,
   parentOperation: string,
-  storeMessages: boolean
+  storeMessages: boolean,
+  finishStreamSpanAtHandoff: boolean
 ): unknown {
   if (!wrapLanguageModel) {
     return model;
@@ -77,8 +78,9 @@ export function wrapModel(
           storeMessages
         );
         // The provider call runs INSIDE the activation callback so its work
-        // (fetch subrequests, etc.) nests under the chat span; the span stays
-        // caller-owned because the stream outlives the callback.
+        // (fetch subrequests, etc.) nests under the chat span. Normal streams
+        // stay caller-owned; invocation-bounded WebSocket streams finish when
+        // the callback hands asynchronous provider work back to the runtime.
         return tracer.openSpan(
           span.name,
           span.attributes,
@@ -87,6 +89,9 @@ export function wrapModel(
             try {
               const startedAtMs = Date.now();
               const result = await doStream();
+              if (finishStreamSpanAtHandoff) {
+                return result;
+              }
               return finishWhenStreamCompletes(result, modelCall, {
                 aiGatewayLogId:
                   extractAIGatewayLogId(result) ?? aiGatewayLog.get(),
@@ -100,7 +105,8 @@ export function wrapModel(
               modelCall.fail(cause);
               throw cause;
             }
-          }
+          },
+          finishStreamSpanAtHandoff ? { finishOnAsyncHandoff: true } : undefined
         );
       }
     }
