@@ -138,6 +138,8 @@ function createOperationWrapper(
   // is listening, so untraced calls never touch caller getters beyond that.
   if (isStreamOperation(operationName)) {
     return (params, ...args) => {
+      const finishAtHandoff = isWebSocketTurn(params);
+      const hasModelSpan = canWrapModel(wrapLanguageModel, params.model);
       return instrumentation.tracer.openSpan(
         operationSpanName(agentNameForCall(params)),
         {},
@@ -168,17 +170,30 @@ function createOperationWrapper(
               operationName,
               wrapLanguageModel,
               instrumentation.tracer,
-              storage
+              storage,
+              finishAtHandoff
             ),
             ...args
           );
-          const hasModelSpan = canWrapModel(wrapLanguageModel, params.model);
+
+          if (finishAtHandoff) {
+            if (!hasModelSpan) {
+              operationSpan.finish();
+            }
+            return result;
+          }
 
           return finishWhenStreamCompletes(result, operationSpan, {
             includeResponse: !hasModelSpan,
             startedAtMs: hasModelSpan ? undefined : startedAtMs
           });
-        }
+        },
+        finishAtHandoff && hasModelSpan
+          ? {
+              finishOnChild: (childName) =>
+                childName === "chat" || childName.startsWith("chat ")
+            }
+          : undefined
       );
     };
   }
@@ -250,7 +265,8 @@ function operationParamsForCall(
   operationName: AISDKV6OperationName,
   wrapLanguageModel: AISDKV6WrapLanguageModel | undefined,
   tracer: AgentTracer,
-  storage: ResolvedAISDKStorageOptions
+  storage: ResolvedAISDKStorageOptions,
+  finishStreamSpansAtHandoff = false
 ): AISDKV6CallParams {
   return {
     ...params,
@@ -264,11 +280,25 @@ function operationParamsForCall(
             wrapLanguageModel,
             params.model,
             operationName,
-            storage.storeMessages
+            storage.storeMessages,
+            finishStreamSpansAtHandoff
           )
         }
       : {})
   };
+}
+
+function isWebSocketTurn(params: AISDKV6CallParams): boolean {
+  const telemetry =
+    typeof params.experimental_telemetry === "object" &&
+    params.experimental_telemetry !== null
+      ? (params.experimental_telemetry as Record<string, unknown>)
+      : undefined;
+  const metadata =
+    typeof telemetry?.metadata === "object" && telemetry.metadata !== null
+      ? (telemetry.metadata as Record<string, unknown>)
+      : undefined;
+  return metadata?.["cloudflare.agents.turn.trigger"] === "ws-chat";
 }
 
 function canWrapModel(

@@ -84,6 +84,7 @@ import {
 import { tracer } from "./observability/tracing/cloudflare";
 import {
   writeSpanAttributes,
+  type SpanLifetime,
   type TraceAttributes
 } from "./observability/tracing/tracer";
 import { DisposableStore } from "./core/events";
@@ -1863,19 +1864,22 @@ export class Agent<
     operation: string,
     storagePhase: string,
     attributes: TraceAttributes,
-    run: (update: (attributes: TraceAttributes) => void) => Promise<T>
+    run: (update: (attributes: TraceAttributes) => void) => Promise<T>,
+    lifetime?: SpanLifetime
   ): Promise<T>;
   private _withAgentSpan<T>(
     operation: string,
     storagePhase: string,
     attributes: TraceAttributes,
-    run: (update: (attributes: TraceAttributes) => void) => T
+    run: (update: (attributes: TraceAttributes) => void) => T,
+    lifetime?: SpanLifetime
   ): T;
   private _withAgentSpan<T>(
     operation: string,
     storagePhase: string,
     attributes: TraceAttributes,
-    run: (update: (attributes: TraceAttributes) => void) => T | Promise<T>
+    run: (update: (attributes: TraceAttributes) => void) => T | Promise<T>,
+    lifetime?: SpanLifetime
   ): T | Promise<T> {
     // The instance name is not always readable during construction: facets
     // restore it after construction and unnamed DOs receive it later.
@@ -1898,7 +1902,8 @@ export class Agent<
         ...attributes
       },
       (span) =>
-        run((finishAttributes) => writeSpanAttributes(span, finishAttributes))
+        run((finishAttributes) => writeSpanAttributes(span, finishAttributes)),
+      lifetime
     );
   }
 

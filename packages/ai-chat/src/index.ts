@@ -137,13 +137,18 @@ type AgentSpanAttributes = Readonly<
 >;
 
 type UpdateAgentSpan = (attributes: AgentSpanAttributes) => void;
+type AgentSpanLifetime = {
+  finishOnChild?: string;
+  finishOnAsyncHandoff?: boolean;
+};
 
 type AgentSpanHost = {
   _withAgentSpan<T>(
     operation: string,
     storagePhase: string,
     attributes: AgentSpanAttributes,
-    run: (update: UpdateAgentSpan) => T | Promise<T>
+    run: (update: UpdateAgentSpan) => T | Promise<T>,
+    lifetime?: AgentSpanLifetime
   ): T | Promise<T>;
 };
 
@@ -152,27 +157,31 @@ function withAgentSpan<T>(
   operation: string,
   storagePhase: string,
   attributes: AgentSpanAttributes,
-  run: (update: UpdateAgentSpan) => Promise<T>
+  run: (update: UpdateAgentSpan) => Promise<T>,
+  lifetime?: AgentSpanLifetime
 ): Promise<T>;
 function withAgentSpan<T>(
   host: object,
   operation: string,
   storagePhase: string,
   attributes: AgentSpanAttributes,
-  run: (update: UpdateAgentSpan) => T
+  run: (update: UpdateAgentSpan) => T,
+  lifetime?: AgentSpanLifetime
 ): T;
 function withAgentSpan<T>(
   host: object,
   operation: string,
   storagePhase: string,
   attributes: AgentSpanAttributes,
-  run: (update: UpdateAgentSpan) => T | Promise<T>
+  run: (update: UpdateAgentSpan) => T | Promise<T>,
+  lifetime?: AgentSpanLifetime
 ): T | Promise<T> {
   return (host as AgentSpanHost)._withAgentSpan(
     operation,
     storagePhase,
     attributes,
-    run
+    run,
+    lifetime
   );
 }
 
@@ -1220,7 +1229,8 @@ export class AIChatAgent<
                                   response,
                                   [connection.id],
                                   { chatMessageId }
-                                )
+                                ),
+                              { finishOnAsyncHandoff: true }
                             );
                           } else {
                             console.warn(
@@ -1262,6 +1272,7 @@ export class AIChatAgent<
               },
               {
                 epoch,
+                lifetime: { finishOnChild: "persist_chat_result" },
                 onStale: () =>
                   this._completeSkippedRequest(connection, chatMessageId)
               }
@@ -1419,7 +1430,8 @@ export class AIChatAgent<
             "cloudflare.agents.component": "ai_chat",
             "cloudflare.agents.turn.request_id": event.id
           },
-          () => handleMessage(connection, message)
+          () => handleMessage(connection, message),
+          { finishOnChild: "chat_turn" }
         );
       }
       return handleMessage(connection, message);
@@ -2638,7 +2650,11 @@ export class AIChatAgent<
   private async _runExclusiveChatTurn<T>(
     requestId: string,
     fn: () => Promise<T>,
-    options?: { epoch?: number; onStale?: () => void }
+    options?: {
+      epoch?: number;
+      lifetime?: AgentSpanLifetime;
+      onStale?: () => void;
+    }
   ): Promise<T> {
     const generation = options?.epoch;
     let result: TurnResult<T>;
@@ -2656,7 +2672,8 @@ export class AIChatAgent<
               "cloudflare.agents.turn.admission": "queue",
               "cloudflare.agents.turn.generation": generation
             },
-            fn
+            fn,
+            options?.lifetime
           ),
         { generation }
       );

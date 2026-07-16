@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+
 /** Attribute values accepted by custom spans. */
 export type TraceAttributeValue = string | number | boolean | undefined;
 
@@ -19,6 +21,19 @@ export type SpanRuntime = {
   startActiveSpan<T>(name: string, run: (span: SpanWriter) => T): T;
 };
 
+/** Optional automatic lifetime policy for invocation-bounded spans. */
+export type SpanLifetime = {
+  /** Finish this span after a matching child has opened beneath it. */
+  readonly finishOnChild?: string | ((childName: string) => boolean);
+  /** Finish as soon as the callback hands asynchronous work back to its caller. */
+  readonly finishOnAsyncHandoff?: boolean;
+};
+
+type ActiveManagedSpan = {
+  readonly span: ManagedSpan;
+  readonly lifetime?: SpanLifetime;
+};
+
 /** AgentTracer seam used by integrations. */
 export type AgentTracer = {
   /**
@@ -32,7 +47,8 @@ export type AgentTracer = {
   withSpan<T>(
     name: string,
     attributes: TraceAttributes,
-    run: (span: AgentSpan) => MaybePromise<T>
+    run: (span: AgentSpan) => MaybePromise<T>,
+    lifetime?: SpanLifetime
   ): T | Promise<T>;
   /**
    * Activates a span and returns whatever `activate` returns (typically the
@@ -46,7 +62,8 @@ export type AgentTracer = {
   openSpan<T>(
     name: string,
     attributes: TraceAttributes,
-    activate: (span: AgentSpan) => T
+    activate: (span: AgentSpan) => T,
+    lifetime?: SpanLifetime
   ): T;
 };
 
@@ -73,37 +90,60 @@ export function createTracer(runtime: SpanRuntime): AgentTracer {
 }
 
 class RuntimeTracer implements AgentTracer {
+  private readonly activeSpan = new AsyncLocalStorage<ActiveManagedSpan>();
+
   constructor(private readonly runtime: SpanRuntime) {}
 
   withSpan<T>(
     name: string,
     attributes: TraceAttributes,
-    run: (span: AgentSpan) => MaybePromise<T>
+    run: (span: AgentSpan) => MaybePromise<T>,
+    lifetime?: SpanLifetime
   ): T | Promise<T> {
-    return this.activate(name, attributes, (span) => {
-      const result = run(span);
-      if (isPromiseLike(result)) {
-        return Promise.resolve(result)
-          .catch((cause: unknown) => {
-            span.fail(cause);
-            throw cause;
-          })
-          .finally(() => {
-            span.close();
-          });
-      }
+    return this.activate(
+      name,
+      attributes,
+      (span) => {
+        const result = run(span);
+        if (isPromiseLike(result)) {
+          if (lifetime?.finishOnAsyncHandoff) {
+            span.finish();
+          }
+          return Promise.resolve(result)
+            .catch((cause: unknown) => {
+              span.fail(cause);
+              throw cause;
+            })
+            .finally(() => {
+              span.close();
+            });
+        }
 
-      span.close();
-      return result;
-    });
+        span.close();
+        return result;
+      },
+      lifetime
+    );
   }
 
   openSpan<T>(
     name: string,
     attributes: TraceAttributes,
-    activate: (span: AgentSpan) => T
+    activate: (span: AgentSpan) => T,
+    lifetime?: SpanLifetime
   ): T {
-    return this.activate(name, attributes, activate);
+    return this.activate(
+      name,
+      attributes,
+      (span) => {
+        const result = activate(span);
+        if (lifetime?.finishOnAsyncHandoff && isPromiseLike(result)) {
+          span.finish();
+        }
+        return result;
+      },
+      lifetime
+    );
   }
 
   /**
@@ -114,14 +154,20 @@ class RuntimeTracer implements AgentTracer {
   private activate<T>(
     name: string,
     attributes: TraceAttributes,
-    body: (span: ManagedSpan) => T
+    body: (span: ManagedSpan) => T,
+    lifetime?: SpanLifetime
   ): T {
+    const parent = this.activeSpan.getStore();
     return this.runtime.startActiveSpan(name, (writer) => {
       setAttributes(writer, attributes);
       const span = new ManagedSpan(writer);
 
+      if (matchesChild(parent?.lifetime?.finishOnChild, name)) {
+        parent?.span.finish();
+      }
+
       try {
-        return body(span);
+        return this.activeSpan.run({ span, lifetime }, () => body(span));
       } catch (cause: unknown) {
         span.fail(cause);
         throw cause;
@@ -221,6 +267,15 @@ function setAttributes(span: SpanWriter, attributes: TraceAttributes): void {
   } catch {
     // Drop the attributes; the span still closes.
   }
+}
+
+function matchesChild(
+  matcher: SpanLifetime["finishOnChild"],
+  childName: string
+): boolean {
+  return typeof matcher === "function"
+    ? matcher(childName)
+    : matcher === childName;
 }
 
 function isPromiseLike<T>(value: MaybePromise<T>): value is PromiseLike<T> {

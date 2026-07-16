@@ -316,6 +316,14 @@ They never remain open while waiting for a human across invocations. Stream
 spans close on completion, cancellation, an in-band error, or early consumer
 return. Async-generator tools stay open until iteration ends.
 
+Hibernatable WebSocket turns are bounded differently because a cancel or
+disconnect can end the original Worker invocation before JavaScript stream
+finalizers run. Tracer lifetime policies automatically close interaction, turn,
+`invoke_agent`, `chat`, and result spans when a matching child opens or their
+callback hands off asynchronous work. Their context remains active so later
+spans keep the same parent IDs. RPC and alarm turns retain full-stream span
+lifetimes.
+
 Pass `storeMessages: true` to write full input/output message arrays (including
 tool-call parts) to `chat`; pass `storeTools: true` to write tool arguments and
 results to `execute_tool`:
