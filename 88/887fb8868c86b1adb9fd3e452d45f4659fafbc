@@ -1,0 +1,19 @@
+packages/agents/src/observability/agent-span-attributes.ts
+  s_5423a34c531be4::t_234608ddc2ca2b 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "88887fb8868c86b1adb9fd3e452d45f4659fafbc",
+  "prompts": {},
+  "sessions": {
+    "s_5423a34c531be4": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8ad8-59d5-7b75-a137-b65d1607ca56",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}
