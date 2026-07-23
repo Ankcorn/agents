@@ -1889,8 +1889,11 @@ export class Agent<
     return tracer.withSpan(
       operation,
       {
-        "cloudflare.agents.agent.id": agentId,
-        "cloudflare.agents.agent.name": this._ParentClass.name,
+        "cloudflare.agents.instrumentation.name": "agents",
+        "cloudflare.agents.instrumentation.version": "0.17.4",
+        "cloudflare.agents.instance.id": this.ctx.id.toString(),
+        "cloudflare.agents.instance.name": agentId,
+        "cloudflare.agents.agent.class_name": this._ParentClass.name,
         "cloudflare.agents.operation.name": operation,
         "cloudflare.agents.storage.grouped": true,
         "cloudflare.agents.storage.system": "durable_object",
