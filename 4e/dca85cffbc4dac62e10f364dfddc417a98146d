@@ -1,0 +1,31 @@
+packages/agents/src/observability/agent-span-attributes.ts
+  s_5423a34c531be4::t_234608ddc2ca2b 1-19
+packages/agents/src/observability/ai/v6/tools.ts
+  s_9bd19101b339ba::t_6d9d094105b628 3,14-15,25-31,40-41,64,80,102-108,135-136,149-155,169-170,178-179,189-190,193,200,208-209,211-216
+packages/agents/src/observability/ai/v6/wrap.ts
+  s_9bd19101b339ba::t_c8baa69d9c8834 152,157-158,163-164,174-175,199,204-205,208-212,220-221,264-265,270-272,281-282,323-324,331
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4edca85cffbc4dac62e10f364dfddc417a98146d",
+  "prompts": {},
+  "sessions": {
+    "s_5423a34c531be4": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8ad8-59d5-7b75-a137-b65d1607ca56",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    },
+    "s_9bd19101b339ba": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f93f4-9d3e-7207-88e5-4e443f9099f2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}
