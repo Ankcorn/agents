@@ -1,0 +1,19 @@
+packages/ai-chat/src/index.ts
+  s_6d0b862fefb27a::t_2b98ae5866eb68 135-178,801-828,830-837,839-848,850-856,858-866,919-922,994-1004,1033-1036,1038-1040,1042-1049,1051-1055,1057-1061,1100-1112,1129-1151,1153-1155,1175-1188,1204-1207,1209-1223,1410-1426,2646-2662
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "005837100347d736f709ba441fffefcac9f5be3c",
+  "prompts": {},
+  "sessions": {
+    "s_6d0b862fefb27a": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f657a-dbe6-7428-9373-ecee12add79e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}

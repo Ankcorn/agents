@@ -1,0 +1,25 @@
+packages/agents/src/index.ts
+  s_6d0b862fefb27a::t_16deeefcd742a4 87,1867-1868,1874-1875,1881-1882,1905-1906
+packages/agents/src/observability/ai/v6/model.ts
+  s_6d0b862fefb27a::t_57ac8696a89506 23-24,81-83,92-94,108-109
+packages/agents/src/observability/tracing/tracer.ts
+  s_6d0b862fefb27a::t_a15cf376e6f9a9 1-2,24-36,50-51,65-66,93-94,100-101,103-120,122-126,132-133,135-146,157-158,160,165-168,170,272-280
+packages/agents/src/tests/observability/recording-tracer.ts
+  s_6d0b862fefb27a::t_64cb3b4bb1f820 24-25,28-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7cfbea078cc2db4ecfd478b8092e31761ae5070b",
+  "prompts": {},
+  "sessions": {
+    "s_6d0b862fefb27a": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f657a-dbe6-7428-9373-ecee12add79e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}
