@@ -1,0 +1,19 @@
+packages/agents/src/index.ts
+  s_66ec235279673b::t_3db189c63a5175 388-389,7111-7115,7505-7507,7530,7548,7599-7610,7612,7619,7623-7641
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0c149fa4badf1dce50843997904c652c03848625",
+  "prompts": {},
+  "sessions": {
+    "s_66ec235279673b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019fb863-265d-7006-8648-321e9e0d5024",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}
