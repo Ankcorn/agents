@@ -1,0 +1,23 @@
+packages/agents/src/index.ts
+  s_068aab20e93dd8::t_3179282769d30b 2324-2328,2330,2332-2337,2696-2703,2705-2722,2729-2731,2733-2735,2756,2798,5619-5628,5675
+packages/ai-chat/src/index.ts
+  s_068aab20e93dd8::t_82518b58e21acb 802-821,951,988,990-991,993-994,996-998,1000-1002,1041,1058-1070,1090
+packages/think/src/think.ts
+  s_068aab20e93dd8::t_143c418211a408 2906-2913,2915-2924,2926-2941,2943-2945,2958-2965,2967-2970,2974,2978-2982,2992-2996,3002-3017,3027,5490,11313,11346-11352,11354-11355,11369,11381-11382,11384,11386,11388-11392
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0a4c57e9849530b8b17894f6fd55f47fbfa79bcd",
+  "prompts": {},
+  "sessions": {
+    "s_068aab20e93dd8": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019fafbc-7a84-7cf5-af7b-6149ef462e9d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}

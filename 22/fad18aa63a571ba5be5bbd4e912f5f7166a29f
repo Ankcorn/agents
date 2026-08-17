@@ -1,0 +1,21 @@
+packages/agents/src/index.ts
+  s_47c6e2865dc083::t_096cb9e7842275 2324-2333,2335,2337-2344
+packages/ai-chat/src/index.ts
+  s_47c6e2865dc083::t_b199787cf468d3 802-829
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "22fad18aa63a571ba5be5bbd4e912f5f7166a29f",
+  "prompts": {},
+  "sessions": {
+    "s_47c6e2865dc083": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019faf51-3c44-765b-ab98-d51b42f52319",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}

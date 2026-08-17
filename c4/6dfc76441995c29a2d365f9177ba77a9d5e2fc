@@ -1,0 +1,39 @@
+packages/agents/src/observability/genai/telemetry.ts
+  s_b3263ba462e0c4::t_2ddd00b252f716 321,331-332,338-340,342-348,350
+packages/agents/src/tests/observability/ai-sdk-v6-integration.test.ts
+  s_9ac4853fb0f86d::t_0763b1dad9d4c8 77
+packages/agents/src/observability/agent-span-attributes.ts
+  s_5423a34c531be4::t_234608ddc2ca2b 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c46dfc76441995c29a2d365f9177ba77a9d5e2fc",
+  "prompts": {},
+  "sessions": {
+    "s_5423a34c531be4": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8ad8-59d5-7b75-a137-b65d1607ca56",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    },
+    "s_9ac4853fb0f86d": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8e50-05e0-7609-8cbf-878f687a9b39",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    },
+    "s_b3263ba462e0c4": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8a95-c1b2-7c91-ba68-d3c08fa67869",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Thomas Ankcorn <tankcorn@cloudflare.com>"
+    }
+  }
+}
